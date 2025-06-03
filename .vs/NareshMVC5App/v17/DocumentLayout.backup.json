@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\MVC5App-sample-Signature Project\\NareshMVC5App\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{98CF6BC8-DAF5-47FB-A03E-0FDEB65288FF}|NareshMVC5App\\NareshMVC5App.csproj|e:\\mvc5app-sample-signature project\\nareshmvc5app\\nareshmvc5app\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{98CF6BC8-DAF5-47FB-A03E-0FDEB65288FF}|NareshMVC5App\\NareshMVC5App.csproj|solutionrelative:nareshmvc5app\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "_Layout.cshtml",
+              "DocumentMoniker": "E:\\MVC5App-sample-Signature Project\\NareshMVC5App\\NareshMVC5App\\Views\\Shared\\_Layout.cshtml",
+              "RelativeDocumentMoniker": "NareshMVC5App\\Views\\Shared\\_Layout.cshtml",
+              "ToolTip": "E:\\MVC5App-sample-Signature Project\\NareshMVC5App\\NareshMVC5App\\Views\\Shared\\_Layout.cshtml",
+              "RelativeToolTip": "NareshMVC5App\\Views\\Shared\\_Layout.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAABOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2024-05-27T01:46:52.871Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
