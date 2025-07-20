@@ -13,9 +13,20 @@ pipeline {
             }
         }
 
-        stage('Build MVC5 Project') {
+        stage('Build and Publish') {
             steps {
-                bat 'MSBuild.exe NareshMVC5App.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:PublishDir=PublishedApp\\'
+                bat '''
+                "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe" NareshMVC5App\\NareshMVC5App.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:PublishDir="C:\\PublishedApp\\"
+                '''
+            }
+        }
+
+        stage('Deploy to IIS') {
+            steps {
+                bat '''
+                xcopy /s /e /y "C:\\PublishedApp\\*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
+                iisreset
+                '''
             }
         }
 
@@ -27,11 +38,17 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    bat """
-                        docker login -u %DOCKER_USER% -p %DOCKER_PASS%
-                        docker push %IMAGE_NAME%
-                    """
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "${DOCKERHUB_CREDENTIALS}",
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    bat '''
+                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+                    docker push %IMAGE_NAME%
+                    '''
                 }
             }
         }
