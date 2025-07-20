@@ -9,13 +9,13 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/yourusername/your-mvc5-repo.git', branch: 'main'
+                git url: 'https://github.com/rahulchaubey91/NareshMVC5App.git', branch: 'main'
             }
         }
 
         stage('Build MVC5 Project') {
             steps {
-                bat 'MSBuild.exe YourMvcApp.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:PublishDir=PublishedApp\\'
+                bat 'MSBuild.exe NareshMVC5App.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:PublishDir=PublishedApp\\'
             }
         }
 
