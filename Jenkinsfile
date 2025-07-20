@@ -1,36 +1,25 @@
 pipeline {
-    agent { label 'windows' }
+    agent { label 'windows' } // Windows node required
 
     environment {
         IMAGE_NAME = 'rahulchaubey/mvc5app'
-        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred' // Jenkins credentials ID
-        PUBLISH_DIR = 'C:\\PublishedApp\\'
+        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred' // Jenkins Credentials ID
+        PUBLISH_DIR = 'C:\\Jenkins\\PublishedApp\\'
+        IIS_DEPLOY_DIR = 'C:\\inetpub\\wwwroot\\NareshMVC5App\\'
+        MSBUILD_EXE = '"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"'
     }
 
     stages {
-        stage('Ensure Tools Are Installed') {
-            steps {
-                bat '''
-                where git || choco install git -y
-                where java || choco install jdk8 -y
-                where docker || choco install docker-cli -y
-                if not exist "C:\\BuildTools" (
-                    choco install visualstudio2019buildtools -y --package-parameters "--add Microsoft.VisualStudio.Workload.MSBuildTools"
-                )
-                '''
-            }
-        }
-
         stage('Checkout Code') {
             steps {
                 git url: 'https://github.com/rahulchaubey91/NareshMVC5App.git', branch: 'main'
             }
         }
 
-        stage('Build with MSBuild') {
+        stage('Build and Publish') {
             steps {
                 bat """
-                \"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe\" NareshMVC5App\\NareshMVC5App.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:PublishDir=${PUBLISH_DIR}
+                ${MSBUILD_EXE} NareshMVC5App\\NareshMVC5App.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:PublishDir=${PUBLISH_DIR}
                 """
             }
         }
@@ -38,7 +27,8 @@ pipeline {
         stage('Deploy to IIS') {
             steps {
                 bat """
-                xcopy /s /e /y "${PUBLISH_DIR}*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
+                if not exist "${IIS_DEPLOY_DIR}" mkdir "${IIS_DEPLOY_DIR}"
+                xcopy /s /e /y "${PUBLISH_DIR}*" "${IIS_DEPLOY_DIR}"
                 iisreset
                 """
             }
@@ -59,10 +49,10 @@ pipeline {
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
-                    bat '''
+                    bat """
                     docker login -u %DOCKER_USER% -p %DOCKER_PASS%
                     docker push %IMAGE_NAME%
-                    '''
+                    """
                 }
             }
         }
