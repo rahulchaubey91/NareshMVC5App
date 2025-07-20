@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'rahulchaubey/mvc5app'
-        DOCKERHUB_CREDENTIALS = 'dockerHubCred' // Jenkins credential ID
+        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred' // Jenkins credential ID
     }
 
     stages {
