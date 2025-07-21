@@ -4,8 +4,9 @@ pipeline {
     environment {
         IMAGE_NAME = 'rahulchaubey/mvc5app'
         DOCKERHUB_CREDENTIALS = 'dockerHubWinCred'
-        MSBUILD_PATH = 'C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe'
+        MSBUILD_PATH = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe'
         PUBLISH_DIR = 'C:\\PublishedApp\\'
+        IIS_DEPLOY_DIR = 'C:\\inetpub\\wwwroot\\NareshMVC5App\\'
     }
 
     stages {
@@ -15,15 +16,26 @@ pipeline {
             }
         }
 
-        stage('Build MVC5 Project') {
+        stage('Verify MSBuild') {
             steps {
                 bat '''
                 echo === Checking MSBuild path ===
                 if not exist "%MSBUILD_PATH%" (
-                    echo ERROR: MSBuild not found at "%MSBUILD_PATH%"
+                    echo ERROR: MSBuild not found at %MSBUILD_PATH%
                     exit /b 1
                 )
-                "%MSBUILD_PATH%" NareshMVC5App\\NareshMVC5App.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:PublishDir=%PUBLISH_DIR%
+                echo MSBuild found at %MSBUILD_PATH%
+                '''
+            }
+        }
+
+        stage('Build and Publish') {
+            steps {
+                bat '''
+                "%MSBUILD_PATH%" NareshMVC5App\\NareshMVC5App.csproj ^
+                /p:Configuration=Release ^
+                /p:DeployOnBuild=true ^
+                /p:PublishDir=%PUBLISH_DIR%
                 '''
             }
         }
@@ -31,7 +43,8 @@ pipeline {
         stage('Deploy to IIS') {
             steps {
                 bat '''
-                xcopy /s /e /y "%PUBLISH_DIR%*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
+                if not exist "%IIS_DEPLOY_DIR%" mkdir "%IIS_DEPLOY_DIR%"
+                xcopy /s /e /y "%PUBLISH_DIR%*" "%IIS_DEPLOY_DIR%"
                 iisreset
                 '''
             }
