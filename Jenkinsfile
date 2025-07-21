@@ -5,7 +5,7 @@ pipeline {
         IMAGE_NAME = 'rahulchaubey/mvc5app'
         DOCKERHUB_CREDENTIALS = 'dockerHubWinCred'
         BUILD_PATH = 'NareshMVC5App\\NareshMVC5App.csproj'
-        MSBUILD_PATH = '"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"'
+        MSBUILD_PATH = '"C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"'
         PUBLISH_DIR = 'C:\\PublishedApp\\'
         DEPLOY_DIR = 'C:\\inetpub\\wwwroot\\NareshMVC5App\\'
     }
