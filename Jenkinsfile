@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'rahulchaubey/mvc5app'
-        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred'
+        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred' // Jenkins credential ID
     }
 
     stages {
@@ -35,11 +35,6 @@ pipeline {
         stage('Deploy to IIS') {
             steps {
                 bat '''
-                echo === Deploying to IIS ===
-                if not exist "C:\\PublishedApp\\" (
-                    echo ERROR: Publish directory not found!
-                    exit /b 1
-                )
                 xcopy /s /e /y "C:\\PublishedApp\\*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
                 iisreset
                 '''
