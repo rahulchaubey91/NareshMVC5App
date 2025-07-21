@@ -15,7 +15,7 @@ pipeline {
 
         stage('Build and Publish') {
             steps {
-                bat ''' 
+                bat '''
                 echo === Checking MSBuild path ===
                 set "MSBUILD_PATH=C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
                 if not exist "%MSBUILD_PATH%" (
@@ -30,7 +30,7 @@ pipeline {
 
         stage('Deploy to IIS') {
             steps {
-                bat ''' 
+                bat '''
                 echo === Deploying to IIS ===
                 if not exist "C:\\PublishedApp\\" (
                     echo ERROR: Publish directory not found!
@@ -44,9 +44,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat '''
-                docker build -t %IMAGE_NAME% .
-                '''
+                bat 'docker build -t %IMAGE_NAME% .'
             }
         }
 
