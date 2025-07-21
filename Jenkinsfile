@@ -1,16 +1,17 @@
 pipeline {
-    agent { label 'windows' } // Windows Jenkins agent
+    agent { label 'windows' } // Must be Windows agent
 
     environment {
         IMAGE_NAME = 'rahulchaubey/mvc5app'
-        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred' // Jenkins credentials ID
+        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred'
         BUILD_PATH = 'NareshMVC5App\\NareshMVC5App.csproj'
-        MSBUILD_PATH = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe'
+        MSBUILD_PATH = '"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"'
         PUBLISH_DIR = 'C:\\PublishedApp\\'
         DEPLOY_DIR = 'C:\\inetpub\\wwwroot\\NareshMVC5App\\'
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 git url: 'https://github.com/rahulchaubey91/NareshMVC5App.git', branch: 'main'
@@ -21,7 +22,7 @@ pipeline {
             steps {
                 bat '''
                 echo === Checking MSBuild path ===
-                if not exist "%MSBUILD_PATH%" (
+                if not exist %MSBUILD_PATH% (
                     echo ERROR: MSBuild not found at %MSBUILD_PATH%
                     exit /b 1
                 )
@@ -30,7 +31,7 @@ pipeline {
                 if not exist "%PUBLISH_DIR%" mkdir "%PUBLISH_DIR%"
 
                 echo === Building the project ===
-                "%MSBUILD_PATH%" %BUILD_PATH% ^
+                %MSBUILD_PATH% %BUILD_PATH% ^
                     /p:Configuration=Release ^
                     /p:DeployOnBuild=true ^
                     /p:PublishDir=%PUBLISH_DIR%
@@ -41,9 +42,13 @@ pipeline {
         stage('Deploy to IIS') {
             steps {
                 bat '''
-                echo === Deploying to IIS ===
+                echo === Creating IIS deploy directory if not exists ===
                 if not exist "%DEPLOY_DIR%" mkdir "%DEPLOY_DIR%"
+
+                echo === Copying published files to IIS ===
                 xcopy /s /e /y "%PUBLISH_DIR%*" "%DEPLOY_DIR%"
+
+                echo === Restarting IIS ===
                 iisreset
                 '''
             }
@@ -51,7 +56,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t %IMAGE_NAME% ."
+                bat 'docker build -t %IMAGE_NAME% .'
             }
         }
 
@@ -65,7 +70,6 @@ pipeline {
                     )
                 ]) {
                     bat '''
-                    echo === Logging in to DockerHub ===
                     docker login -u %DOCKER_USER% -p %DOCKER_PASS%
                     docker push %IMAGE_NAME%
                     '''
