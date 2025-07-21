@@ -1,9 +1,9 @@
 pipeline {
-    agent { label 'windows' } // Must be a Windows agent
+    agent { label 'windows' } // Ensure Windows Agent
 
     environment {
-        IMAGE_NAME = 'rahulchaubey/mvc5app'
-        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred' // Jenkins credential ID
+        IMAGE_NAME = 'rahulchaubey391/mvc5app'
+        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred' // Jenkins credentials ID
     }
 
     stages {
@@ -15,22 +15,22 @@ pipeline {
 
         stage('Build and Publish') {
             steps {
-                bat '''
-                    "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe" ^
-                    NareshMVC5App\\NareshMVC5App.csproj ^
-                    /p:Configuration=Release ^
-                    /p:DeployOnBuild=true ^
-                    /p:PublishDir="C:\\PublishedApp\\"
-                '''
+                bat """
+                \"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe\" ^
+                NareshMVC5App\\NareshMVC5App.csproj ^
+                /p:Configuration=Release ^
+                /p:DeployOnBuild=true ^
+                /p:PublishDir=C:\\PublishedApp\\
+                """
             }
         }
 
         stage('Deploy to IIS') {
             steps {
-                bat '''
-                    xcopy /s /e /y "C:\\PublishedApp\\*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
-                    iisreset
-                '''
+                bat """
+                xcopy /s /e /y C:\\PublishedApp\\* C:\\inetpub\\wwwroot\\NareshMVC5App\\
+                iisreset
+                """
             }
         }
 
@@ -48,3 +48,19 @@ pipeline {
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
+                ]) {
+                    bat """
+                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+                    docker push %IMAGE_NAME%
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
