@@ -2,7 +2,7 @@ pipeline {
     agent { label 'windows' }
 
     environment {
-        IMAGE_NAME = 'rahulchaubey/mvc5app'
+        IMAGE_NAME = 'rahulchaubey391/mvc5app'
         DOCKERHUB_CREDENTIALS = 'dockerHubWinCred'
     }
 
