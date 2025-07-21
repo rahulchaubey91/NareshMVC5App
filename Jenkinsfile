@@ -17,7 +17,7 @@ pipeline {
             steps {
                 bat '''
                 echo === Checking MSBuild path ===
-                set "MSBUILD_PATH=C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
+                set "MSBUILD_PATH=C:\\Progra~2\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
                 if not exist "%MSBUILD_PATH%" (
                     echo ERROR: MSBuild not found at %MSBUILD_PATH%
                     exit /b 1
@@ -32,10 +32,6 @@ pipeline {
             steps {
                 bat '''
                 echo === Deploying to IIS ===
-                if not exist "C:\\PublishedApp\\" (
-                    echo ERROR: Publish directory not found!
-                    exit /b 1
-                )
                 xcopy /s /e /y "C:\\PublishedApp\\*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
                 iisreset
                 '''
@@ -44,17 +40,19 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %IMAGE_NAME% .'
+                bat "docker build -t %IMAGE_NAME% ."
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: "${DOCKERHUB_CREDENTIALS}",
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "${DOCKERHUB_CREDENTIALS}",
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
                     bat '''
                     docker login -u %DOCKER_USER% -p %DOCKER_PASS%
                     docker push %IMAGE_NAME%
