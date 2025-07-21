@@ -2,7 +2,7 @@ pipeline {
     agent { label 'windows' }
 
     environment {
-        IMAGE_NAME = 'rahulchaubey391/mvc5app'
+        IMAGE_NAME = 'rahulchaubey/mvc5app'
         DOCKERHUB_CREDENTIALS = 'dockerHubWinCred'
     }
 
@@ -13,27 +13,21 @@ pipeline {
             }
         }
 
-        stage('Verify MSBuild') {
-            steps {
-                bat '''
-@echo off
-set "MSBUILD_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
-echo === Checking MSBuild path ===
-if not exist "%MSBUILD_PATH%" (
-    echo ERROR: MSBuild not found at "%MSBUILD_PATH%"
-    exit /b 1
-)
-echo MSBuild path verified: %MSBUILD_PATH%
-                '''
-            }
-        }
-
         stage('Build and Publish') {
             steps {
                 bat '''
-@echo off
-set "MSBUILD_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
-"%MSBUILD_PATH%" NareshMVC5App\NareshMVC5App.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:PublishDir="C:\PublishedApp\"
+                echo === Checking MSBuild path ===
+                set "MSBUILD_PATH=C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
+
+                if not exist "%MSBUILD_PATH%" (
+                    echo ERROR: MSBuild not found at %MSBUILD_PATH%
+                    exit /b 1
+                )
+
+                "%MSBUILD_PATH%" NareshMVC5App\\NareshMVC5App.csproj ^
+                    /p:Configuration=Release ^
+                    /p:DeployOnBuild=true ^
+                    /p:PublishDir=C:\\PublishedApp\\
                 '''
             }
         }
@@ -41,16 +35,20 @@ set "MSBUILD_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools
         stage('Deploy to IIS') {
             steps {
                 bat '''
-@echo off
-xcopy /s /e /y "C:\PublishedApp\*" "C:\inetpub\wwwroot\NareshMVC5App\"
-iisreset
+                echo === Deploying to IIS ===
+                if not exist "C:\\PublishedApp\\" (
+                    echo ERROR: Publish directory not found!
+                    exit /b 1
+                )
+                xcopy /s /e /y "C:\\PublishedApp\\*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
+                iisreset
                 '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %IMAGE_NAME% .'
+                bat "docker build -t %IMAGE_NAME% ."
             }
         }
 
@@ -64,9 +62,8 @@ iisreset
                     )
                 ]) {
                     bat '''
-@echo off
-docker login -u %DOCKER_USER% -p %DOCKER_PASS%
-docker push %IMAGE_NAME%
+                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+                    docker push %IMAGE_NAME%
                     '''
                 }
             }
