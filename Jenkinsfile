@@ -23,7 +23,14 @@ pipeline {
                     exit /b 1
                 )
                 echo MSBuild found at %MSBUILD_PATH%
-                "%MSBUILD_PATH%" NareshMVC5App\\NareshMVC5App.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:PublishDir=C:\\PublishedApp\\
+
+                echo === Building and Publishing the MVC5 app ===
+                "%MSBUILD_PATH%" NareshMVC5App\\NareshMVC5App.csproj ^
+                  /p:Configuration=Release ^
+                  /p:DeployOnBuild=true ^
+                  /p:WebPublishMethod=FileSystem ^
+                  /p:PublishProvider=FileSystem ^
+                  /p:PublishDir=C:\\PublishedApp\\
                 '''
             }
         }
@@ -33,7 +40,9 @@ pipeline {
                 bat '''
                 echo === Deploying to IIS ===
                 xcopy /s /e /y "C:\\PublishedApp\\*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
-                iisreset
+
+                echo === Restarting IIS ===
+                "%windir%\\System32\\inetsrv\\iisreset.exe"
                 '''
             }
         }
