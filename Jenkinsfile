@@ -4,7 +4,6 @@ pipeline {
     }
 
     environment {
-        MSBUILD_PATH = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
         PUBLISH_DIR = "C:\\PublishedApp\\"
     }
 
@@ -19,7 +18,7 @@ pipeline {
             steps {
                 bat '''
                 echo === Setting MSBUILD path ===
-                set "MSBUILD_PATH=%MSBUILD_PATH%"
+                set MSBUILD_PATH=C:\\Progra~2\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe
 
                 if not exist "%MSBUILD_PATH%" (
                     echo ERROR: MSBuild not found at %MSBUILD_PATH%
@@ -41,19 +40,19 @@ pipeline {
 
         stage('Deploy to IIS') {
             steps {
-                echo 'IIS Deployment stage - coming next...'
+                echo 'IIS Deployment stage placeholder.'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo 'Docker image build stage - optional for MVC5.'
+                echo 'Docker image build placeholder.'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                echo 'Docker push stage - optional.'
+                echo 'Docker push stage placeholder.'
             }
         }
     }
