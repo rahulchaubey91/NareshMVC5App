@@ -24,16 +24,6 @@ pipeline {
                 )
                 echo MSBuild found at %MSBUILD_PATH%
 
-                echo === Ensure Microsoft.WebApplication.targets workaround ===
-                set "WEBAPP_DIR=%ProgramFiles(x86)%\\MSBuild\\Microsoft\\VisualStudio\\v14.0\\WebApplications"
-                set "WEBAPP_TARGETS=%WEBAPP_DIR%\\Microsoft.WebApplication.targets"
-
-                if not exist "%WEBAPP_TARGETS%" (
-                    echo Creating workaround targets folder...
-                    mkdir "%WEBAPP_DIR%"
-                    curl -L -o "%WEBAPP_TARGETS%" https://raw.githubusercontent.com/rahulchaubey91/NareshMVC5App/main/Microsoft.WebApplication.targets
-                )
-
                 echo === Building and Publishing the MVC5 App ===
                 "%MSBUILD_PATH%" NareshMVC5App\\NareshMVC5App.csproj ^
                     /p:Configuration=Release ^
@@ -51,13 +41,7 @@ pipeline {
                 bat '''
                 echo === Deploying to IIS ===
                 xcopy /s /e /y "C:\\PublishedApp\\*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
-
-                echo === Restarting IIS ===
-                IF EXIST "%windir%\\System32\\inetsrv\\iisreset.exe" (
-                    "%windir%\\System32\\inetsrv\\iisreset.exe"
-                ) ELSE (
-                    echo WARNING: iisreset.exe not found. Skipping IIS reset.
-                )
+                iisreset
                 '''
             }
         }
@@ -70,13 +54,11 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: "${DOCKERHUB_CREDENTIALS}",
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKERHUB_CREDENTIALS}",
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
                     bat '''
                     docker login -u %DOCKER_USER% -p %DOCKER_PASS%
                     docker push %IMAGE_NAME%
