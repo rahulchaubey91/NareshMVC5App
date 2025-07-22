@@ -1,10 +1,11 @@
 pipeline {
-    agent any
+    agent { label 'windows' }
 
     environment {
         MSBUILD_PATH = '"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"'
         PUBLISH_DIR = "C:\\PublishedApp\\NareshMVC5App\\"
         IIS_SITE_PATH = "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
+        DOCKER_PATH = '"C:\\Program Files\\Docker\\docker.exe"'
     }
 
     stages {
@@ -58,7 +59,7 @@ pipeline {
             steps {
                 script {
                     if (fileExists('Dockerfile')) {
-                        bat 'docker build -t nareshmvc5app .'
+                        bat '%DOCKER_PATH% build -t nareshmvc5app .'
                     } else {
                         echo 'Skipping Docker build: Dockerfile not found.'
                     }
@@ -71,7 +72,7 @@ pipeline {
                 expression { fileExists('Dockerfile') }
             }
             steps {
-                bat 'docker push nareshmvc5app'
+                bat '%DOCKER_PATH% push nareshmvc5app'
             }
         }
     }
