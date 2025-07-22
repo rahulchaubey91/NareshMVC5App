@@ -1,58 +1,78 @@
 pipeline {
-    agent { label 'windows' }
-
+    agent any
     environment {
-        PUBLISH_DIR = "C:\\PublishedApp\\NareshMVC5App\\"
-        MSBUILD_EXE = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe\""
+        MSBUILD_PATH = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe'
+        PUBLISH_DIR = 'C:\\PublishedApp\\NareshMVC5App\\'
+        IIS_SITE_DIR = 'C:\\inetpub\\wwwroot\\NareshMVC5App\\'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/rahulchaubey91/NareshMVC5App.git', branch: 'main'
+                git 'https://github.com/rahulchaubey91/NareshMVC5App.git'
             }
         }
 
         stage('Build and Publish') {
             steps {
-                bat """
-                echo === Checking MSBUILD path ===
-                if not exist %MSBUILD_EXE% (
-                    echo ERROR: MSBuild not found at %MSBUILD_EXE%
-                    exit /b 1
-                )
-                echo === Building with MSBuild ===
-                %MSBUILD_EXE% NareshMVC5App\\NareshMVC5App.csproj ^
-                  /p:Configuration=Release ^
-                  /p:DeployOnBuild=true ^
-                  /p:WebPublishMethod=FileSystem ^
-                  /p:PublishDir=${PUBLISH_DIR} ^
-                  /p:VisualStudioVersion=14.0
-                """
+                bat '''
+                    echo === Checking MSBUILD path ===
+                    if not exist "%MSBUILD_PATH%" (
+                        echo ERROR: MSBuild not found at "%MSBUILD_PATH%"
+                        exit /b 1
+                    )
+
+                    echo === Creating Publish Directory if not exists ===
+                    if not exist "%PUBLISH_DIR%" (
+                        mkdir "%PUBLISH_DIR%"
+                    )
+
+                    echo === Building with MSBuild ===
+                    "%MSBUILD_PATH%" NareshMVC5App\\NareshMVC5App.csproj ^
+                        /p:Configuration=Release ^
+                        /p:DeployOnBuild=true ^
+                        /p:WebPublishMethod=FileSystem ^
+                        /p:PublishDir=%PUBLISH_DIR% ^
+                        /p:VisualStudioVersion=14.0
+                '''
             }
         }
 
         stage('Deploy to IIS') {
             steps {
-                bat """
-                echo === Copying Published Files to IIS ===
-                xcopy /E /Y /I ${PUBLISH_DIR} "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
-                """
+                bat '''
+                    echo === Copying Published Files to IIS ===
+                    if exist "%PUBLISH_DIR%" (
+                        xcopy /E /Y /I "%PUBLISH_DIR%" "%IIS_SITE_DIR%"
+                    ) else (
+                        echo ERROR: Publish directory "%PUBLISH_DIR%" does not exist.
+                        exit /b 1
+                    )
+                '''
             }
         }
 
         stage('Build Docker Image') {
+            when {
+                expression { fileExists('Dockerfile') }
+            }
             steps {
-                bat 'docker build -t mvc5-app-image .'
+                bat 'docker build -t nareshmvc5app .'
             }
         }
 
         stage('Push Docker Image') {
+            when {
+                expression { fileExists('Dockerfile') }
+            }
             steps {
-                bat '''
-                docker tag mvc5-app-image your-dockerhub-username/mvc5-app-image
-                docker push your-dockerhub-username/mvc5-app-image
-                '''
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    bat '''
+                        docker login -u %USERNAME% -p %PASSWORD%
+                        docker tag nareshmvc5app %USERNAME%/nareshmvc5app
+                        docker push %USERNAME%/nareshmvc5app
+                    '''
+                }
             }
         }
     }
