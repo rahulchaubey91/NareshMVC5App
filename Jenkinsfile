@@ -19,7 +19,7 @@ pipeline {
             steps {
                 bat '''
                 echo === Setting MSBUILD path ===
-                set MSBUILD_PATH=C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe
+                set "MSBUILD_PATH=C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
 
                 if not exist "%MSBUILD_PATH%" (
                     echo ERROR: MSBuild not found at %MSBUILD_PATH%
@@ -32,7 +32,7 @@ pipeline {
                     /p:Configuration=Release ^
                     /p:DeployOnBuild=true ^
                     /p:WebPublishMethod=FileSystem ^
-                    /p:PublishDir=C:\\PublishedApp\\NareshMVC5App\\ ^
+                    /p:PublishDir=%PUBLISH_DIR% ^
                     /p:VisualStudioVersion=14.0
                 '''
             }
