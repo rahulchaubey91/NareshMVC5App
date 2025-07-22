@@ -16,7 +16,7 @@ pipeline {
         stage('Build and Publish') {
             steps {
                 bat '''
-                echo === Checking MSBuild path ===
+                echo === Setting MSBUILD path ===
                 set "MSBUILD_PATH=C:\\Progra~2\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
                 if not exist "%MSBUILD_PATH%" (
                     echo ERROR: MSBuild not found at %MSBUILD_PATH%
@@ -24,13 +24,24 @@ pipeline {
                 )
                 echo MSBuild found at %MSBUILD_PATH%
 
-                echo === Building and Publishing the MVC5 app ===
+                echo === Ensure Microsoft.WebApplication.targets workaround ===
+                set "WEBAPP_DIR=%ProgramFiles(x86)%\\MSBuild\\Microsoft\\VisualStudio\\v14.0\\WebApplications"
+                set "WEBAPP_TARGETS=%WEBAPP_DIR%\\Microsoft.WebApplication.targets"
+
+                if not exist "%WEBAPP_TARGETS%" (
+                    echo Creating workaround targets folder...
+                    mkdir "%WEBAPP_DIR%"
+                    curl -L -o "%WEBAPP_TARGETS%" https://raw.githubusercontent.com/rahulchaubey91/NareshMVC5App/main/Microsoft.WebApplication.targets
+                )
+
+                echo === Building and Publishing the MVC5 App ===
                 "%MSBUILD_PATH%" NareshMVC5App\\NareshMVC5App.csproj ^
-                  /p:Configuration=Release ^
-                  /p:DeployOnBuild=true ^
-                  /p:WebPublishMethod=FileSystem ^
-                  /p:PublishProvider=FileSystem ^
-                  /p:PublishDir=C:\\PublishedApp\\
+                    /p:Configuration=Release ^
+                    /p:DeployOnBuild=true ^
+                    /p:WebPublishMethod=FileSystem ^
+                    /p:PublishProvider=FileSystem ^
+                    /p:PublishDir=C:\\PublishedApp\\ ^
+                    /p:VisualStudioVersion=14.0
                 '''
             }
         }
@@ -42,7 +53,11 @@ pipeline {
                 xcopy /s /e /y "C:\\PublishedApp\\*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
 
                 echo === Restarting IIS ===
-                "%windir%\\System32\\inetsrv\\iisreset.exe"
+                IF EXIST "%windir%\\System32\\inetsrv\\iisreset.exe" (
+                    "%windir%\\System32\\inetsrv\\iisreset.exe"
+                ) ELSE (
+                    echo WARNING: iisreset.exe not found. Skipping IIS reset.
+                )
                 '''
             }
         }
