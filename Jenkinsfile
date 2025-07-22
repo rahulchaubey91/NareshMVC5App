@@ -34,6 +34,11 @@ pipeline {
                     /p:WebPublishMethod=FileSystem ^
                     /p:PublishDir=%PUBLISH_DIR% ^
                     /p:VisualStudioVersion=14.0
+
+                echo === Removing unnecessary files to reduce Docker image size ===
+                del /q /s "%PUBLISH_DIR%*.pdb"
+                del /q /s "%PUBLISH_DIR%*.xml"
+                del /q /s "%PUBLISH_DIR%*.config"
                 '''
             }
         }
@@ -41,9 +46,6 @@ pipeline {
         stage('Deploy to IIS') {
             steps {
                 bat '''
-                echo === Verifying published files ===
-                dir "%PUBLISH_DIR%" /S
-
                 echo === Copying Published Files to IIS ===
                 if exist "%PUBLISH_DIR%" (
                     xcopy /E /Y /I "%PUBLISH_DIR%" "%IIS_SITE_PATH%"
@@ -59,7 +61,13 @@ pipeline {
             steps {
                 script {
                     if (fileExists('Dockerfile')) {
-                        bat '%DOCKER_PATH% build -t nareshmvc5app .'
+                        bat '''
+                        echo === Copying publish content to Docker context ===
+                        xcopy /E /Y /I "%PUBLISH_DIR%" .
+
+                        echo === Building Docker image ===
+                        %DOCKER_PATH% build -t nareshmvc5app .
+                        '''
                     } else {
                         echo 'Skipping Docker build: Dockerfile not found.'
                     }
