@@ -2,9 +2,8 @@ pipeline {
     agent { label 'windows' }
 
     environment {
-        MSBUILD_PATH = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe'
-        PUBLISH_DIR = 'C:\\PublishedApp\\'
-        IIS_DIR = 'C:\\inetpub\\wwwroot\\NareshMVC5App\\'
+        IMAGE_NAME = 'rahulchaubey/mvc5app'
+        DOCKERHUB_CREDENTIALS = 'dockerHubWinCred'
     }
 
     stages {
@@ -18,34 +17,33 @@ pipeline {
             steps {
                 bat '''
                 echo === Setting MSBUILD path ===
-                set "MSBUILD_PATH=%MSBUILD_PATH%"
+                set "MSBUILD_PATH=C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
 
-                if not exist "%MSBUILD_PATH%" (
-                    echo ERROR: MSBuild not found at %MSBUILD_PATH%
+                if not exist "%%MSBUILD_PATH%%" (
+                    echo ERROR: MSBuild not found at %%MSBUILD_PATH%%
                     exit /b 1
                 )
-                echo MSBuild found at %MSBUILD_PATH%
+                echo MSBuild found at %%MSBUILD_PATH%%
 
                 echo === Ensure Microsoft.WebApplication.targets workaround ===
                 set "WEBAPP_DIR=C:\\Program Files (x86)\\MSBuild\\Microsoft\\VisualStudio\\v14.0\\WebApplications"
-                set "WEBAPP_TARGETS=%WEBAPP_DIR%\\Microsoft.WebApplication.targets"
+                set "WEBAPP_TARGETS=%%WEBAPP_DIR%%\\Microsoft.WebApplication.targets"
 
-                if not exist "%WEBAPP_TARGETS%" (
+                if not exist "%%WEBAPP_TARGETS%%" (
                     echo Creating workaround targets folder...
-                    mkdir "%WEBAPP_DIR%"
-                    curl -L -o "%WEBAPP_TARGETS%" https://raw.githubusercontent.com/rahulchaubey91/NareshMVC5App/main/Microsoft.WebApplication.targets
+                    mkdir "%%WEBAPP_DIR%%"
+                    curl -L -o "%%WEBAPP_TARGETS%%" https://raw.githubusercontent.com/rahulchaubey91/NareshMVC5App/main/Microsoft.WebApplication.targets
                 )
 
                 echo === Building and Publishing the MVC5 App ===
-                "%MSBUILD_PATH%" NareshMVC5App\\NareshMVC5App.csproj ^
-                  /p:Configuration=Release ^
-                  /p:Platform="Any CPU" ^
-                  /p:DeployOnBuild=true ^
-                  /p:WebPublishMethod=FileSystem ^
-                  /p:PublishProvider=FileSystem ^
-                  /p:PublishDir=%PUBLISH_DIR% ^
-                  /p:VisualStudioVersion=14.0 ^
-                  /target:PipelinePreDeployCopyAllFilesToOneFolder
+                "%%MSBUILD_PATH%%" NareshMVC5App\\NareshMVC5App.csproj ^
+                    /p:Configuration=Release ^
+                    /p:DeployOnBuild=true ^
+                    /p:WebPublishMethod=FileSystem ^
+                    /p:PublishProvider=FileSystem ^
+                    /p:PublishDir=C:\\PublishedApp\\ ^
+                    /p:VisualStudioVersion=14.0 ^
+                    /target:PipelinePreDeployCopyAllFilesToOneFolder
                 '''
             }
         }
@@ -53,36 +51,33 @@ pipeline {
         stage('Deploy to IIS') {
             steps {
                 bat '''
-                echo === Copying files to IIS directory ===
-                if not exist "%PUBLISH_DIR%*" (
-                    echo ERROR: No files found in publish directory: %PUBLISH_DIR%
-                    exit /b 1
-                )
-
-                mkdir "%IIS_DIR%" >nul 2>&1
-
-                xcopy /s /e /y "%PUBLISH_DIR%*" "%IIS_DIR%"
-
-                echo === Restarting IIS ===
-                where iisreset >nul 2>&1
-                if %errorlevel%==0 (
-                    iisreset
-                ) else (
-                    echo WARNING: 'iisreset' not found. Make sure IIS is installed and available in PATH.
-                )
+                echo === Deploying to IIS ===
+                xcopy /s /e /y "C:\\PublishedApp\\*" "C:\\inetpub\\wwwroot\\NareshMVC5App\\"
+                iisreset
                 '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo 'Skipping for now or add your docker build step here.'
+                bat "docker build -t %IMAGE_NAME% ."
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                echo 'Skipping for now or add your docker push step here.'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "${DOCKERHUB_CREDENTIALS}",
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    bat '''
+                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+                    docker push %IMAGE_NAME%
+                    '''
+                }
             }
         }
     }
