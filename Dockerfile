@@ -1,10 +1,11 @@
-# Use Microsoft base image with .NET Framework 4.8
 FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2022
 
 WORKDIR /inetpub/wwwroot
 
-# Copy build artifacts from published folder
-COPY ./NareshMVC5App/ .
+# Only copy essential files
+COPY . .
 
-# Expose default IIS port
+# Remove development-only files
+RUN del /q /s *.pdb && del /q /s *.xml && del /q /s *.config
+
 EXPOSE 80
